@@ -1,40 +1,21 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model, authenticate
-
-
-User = get_user_model()
+from .models import CustomUser
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ('first_name', 'last_name', 'cpf', 'email')
-
-class RegisterSerializer(serializers.ModelSerializer):
-
-    confirm_password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
-
-    class Meta:
-        model = User
-        fields = ('first_name', 'last_name', 'cpf', 'email', 'password', 'confirm_password')
+        model = CustomUser
+        fields = ['username', 'cpf', 'email', 'phone', 'first_name', 'second_name', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
-    def validate(self, data):
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError ({"password": "Senhas não conferem"})
-        return data
-
     def create(self, validated_data):
-        validated_data.pop('confirm_password')  # Remove confirm_password já que não é necessário para criar o usuário
-        user = User.objects.create_user(
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-            email=validated_data['email'],
-            password=validated_data['password'],
+        user = CustomUser(
+            username=validated_data['username'],
             cpf=validated_data['cpf'],
-            username = validated_data['first_name'] + ' ' + validated_data['last_name']
+            email=validated_data['email'],
+            phone=validated_data['phone'],
+            first_name=validated_data['first_name'],
+            second_name=validated_data['second_name']
         )
+        user.set_password(validated_data['password'])
+        user.save()
         return user
-    
-    
-class LoginSerializer(serializers.Serializer):
-    pass
